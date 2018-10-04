@@ -68,6 +68,9 @@ public class ScanDBManager {
             case Monocle:
                 sql = "SELECT name FROM forts";
                 break;
+            case RealDeviceMap:
+                sql = "SELECT name FROM gym";
+                break;
         }
 
         try (Connection connection = getScanConnection();
@@ -106,6 +109,15 @@ public class ScanDBManager {
             case Monocle:
                 sql = "  SELECT COUNT(*) " +
                         "FROM sightings " +
+                        "WHERE pokemon_id = ? " +
+                        "AND expire_timestamp > " +
+                        (scannerDb.getProtocol().equals("postgresql") ?
+                                "extract(epoch from (now() - INTERVAL '" + intervalLength + "' " + intervalType.toDbString() + "))" :
+                                "UNIX_TIMESTAMP(now() - INTERVAL '" + intervalLength + "'" + intervalType.toDbString() + ")");
+                break;
+            case RealDeviceMap:
+                sql = "  SELECT COUNT(*) " +
+                        "FROM pokemon " +
                         "WHERE pokemon_id = ? " +
                         "AND expire_timestamp > " +
                         (scannerDb.getProtocol().equals("postgresql") ?
@@ -231,6 +243,25 @@ public class ScanDBManager {
                         "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
                         "WHERE gymdetails.gym_id = ? AND raid_end_ms > (? + INTERVAL 1 MINUTE)";
                 break;
+            case RealDeviceMap:
+                sql = "SELECT name," +
+                        "id," +
+                        "lat," +
+                        "lon," +
+                        "team_id," +
+                        "raid_end_timestamp," +
+                        "raid_battle_timestamp," +
+                        "raid_pokemon_id," +
+                        "raid_level," +
+                        "raid_pokemon_cp," +
+                        "raid_pokemon_move_1," +
+                        "raid_pokemon_move_2" +
+                        "FROM gym " +
+                        "WHERE id = ? AND raid_end_timestamp > " +
+                        (scannerDb.getProtocol().equals("mysql")
+                                ? "UNIX_TIMESTAMP(? + INTERVAL 1 MINUTE)"
+                                : "extract(epoch from (?::timestamptz + INTERVAL '1' MINUTE))");
+                break;
         }
 
         try (Connection connection = getScanConnection();
@@ -246,6 +277,7 @@ public class ScanDBManager {
                     break;
                 case Monocle:
                 case Hydro74000Monocle:
+                case RealDeviceMap:
                     LocalDateTime localDateTime = lastCheckedRaids.withZoneSameInstant(novaBot.getConfig().getTimeZone()).toLocalDateTime();
                     String timeStamp = String.format("%s %s", localDateTime.toLocalDate(), localDateTime.toLocalTime());
 
@@ -307,6 +339,21 @@ public class ScanDBManager {
 
                         raidSpawn = new RaidSpawn("unkn", gymId, lat, lon, team, raidEnd, battleStart, bossId, (bossId > 0 ? Pokemon.getRaidBossCp(bossId, raidLevel) : 0), move_1, move_2, raidLevel);
                         break;
+                    case RealDeviceMap:
+                        name = rs.getString(1);
+                        lat = rs.getDouble(3);
+                        lon = rs.getDouble(4);
+                        team = Team.fromId((Integer) rs.getObject(5));
+                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)), UtilityFunctions.UTC);
+                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(7)), UtilityFunctions.UTC);
+                        bossId = rs.getInt(8);
+                        bossCp = rs.getInt(9);
+                        raidLevel = rs.getInt(10);
+                        move_1 = rs.getInt(11);
+                        move_2 = rs.getInt(12);
+
+                        raidSpawn = new RaidSpawn(name, gymId, lat, lon, team, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
+                        break;
                 }
 
                 return raidSpawn;
@@ -332,6 +379,8 @@ public class ScanDBManager {
         if (novaBot.getDataManager().getKnownRaids().size() > 0) {
             if (scannerDb.getScannerType() == ScannerType.PhilMap || scannerDb.getScannerType() == RocketMap || scannerDb.getScannerType() == SkoodatRocketMap || scannerDb.getScannerType() == SloppyRocketMap) {
                 knownIdQMarks.append("gym.gym_id NOT IN (");
+            } else if (scannerDb.getScannerType() == ScannerType.RealDeviceMap) {
+                knownIdQMarks.append("id NOT in (");
             } else {
                 knownIdQMarks.append("forts.external_id NOT in (");
             }
@@ -430,6 +479,25 @@ public class ScanDBManager {
                         "  INNER JOIN raidinfo ON gym.gym_id = raidinfo.gym_id " +
                         "WHERE " + knownIdQMarks + " raid_end_ms > (? + INTERVAL 1 MINUTE)";
                 break;
+            case RealDeviceMap:
+                sql = "SELECT name," +
+                        "id," +
+                        "lat," +
+                        "lon," +
+                        "team_id," +
+                        "raid_end_timestamp," +
+                        "raid_battle_timestamp," +
+                        "raid_pokemon_id," +
+                        "raid_pokemon_cp," +
+                        "raid_level," +
+                        "raid_pokemon_move_1," +
+                        "raid_pokemon_move_2 " +
+                        "FROM gym " +
+                        "WHERE " + knownIdQMarks + " raid_end_timestamp > " +
+                        (scannerDb.getProtocol().equals("mysql")
+                                ? "UNIX_TIMESTAMP(? + INTERVAL 1 MINUTE)"
+                                : "extract(epoch from (?::timestamptz + INTERVAL '1' MINUTE))");
+                break;
         }
 
         int rows = 0;
@@ -453,6 +521,7 @@ public class ScanDBManager {
                     break;
                 case Monocle:
                 case Hydro74000Monocle:
+                case RealDeviceMap:
                     LocalDateTime localDateTime = lastCheckedRaids.withZoneSameInstant(novaBot.getConfig().getTimeZone()).toLocalDateTime();
                     String timeStamp = String.format("%s %s", localDateTime.toLocalDate(), localDateTime.toLocalTime());
 
@@ -530,6 +599,22 @@ public class ScanDBManager {
                         move_2 = rs.getInt(10);
 
                         raidSpawn = new RaidSpawn("unkn", gymId, lat, lon, team, raidEnd, battleStart, bossId, (bossId > 0 ? Pokemon.getRaidBossCp(bossId, raidLevel) : 0), move_1, move_2, raidLevel);
+                        break;
+                    case RealDeviceMap:
+                        name = rs.getString(1);
+                        gymId = rs.getString(2);
+                        lat = rs.getDouble(3);
+                        lon = rs.getDouble(4);
+                        team = Team.fromId((Integer) rs.getObject(5));
+                        raidEnd = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(6)), UtilityFunctions.UTC);
+                        battleStart = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getInt(7)), UtilityFunctions.UTC);
+                        bossId = rs.getInt(8);
+                        bossCp = rs.getInt(9);
+                        raidLevel = rs.getInt(10);
+                        move_1 = rs.getInt(11);
+                        move_2 = rs.getInt(12);
+
+                        raidSpawn = new RaidSpawn(name, gymId, lat, lon, team, raidEnd, battleStart, bossId, bossCp, move_1, move_2, raidLevel);
                         break;
                 }
                 dbLog.debug(raidSpawn.toString());
@@ -717,6 +802,34 @@ public class ScanDBManager {
                         "WHERE last_modified >= (? - INTERVAL 1 SECOND) " +
                         "AND disappear_time > (UTC_TIMESTAMP() - INTERVAL ? SECOND)" + blacklistQuery;
                 break;
+            case RealDeviceMap:
+                sql = "" +
+                        "SELECT pokemon_id," +
+                        "lat," +
+                        "lon," +
+                        "expire_timestamp," +
+                        "atk_iv," +
+                        "def_iv," +
+                        "sta_iv," +
+                        "move_1," +
+                        "move_2," +
+                        "gender," +
+                        "form," +
+                        "cp," +
+                        "level," +
+                        "weather," +
+                        "id " +
+                        "FROM pokemon " +
+                        "WHERE updated >= " +
+                        (scannerDb.getProtocol().equals("mysql")
+                                ? "UNIX_TIMESTAMP(? - INTERVAL 1 SECOND)"
+                                : "extract(epoch from (?::timestamptz - INTERVAL '1' SECOND)) ") +
+                        "AND expire_timestamp > " +
+                        (scannerDb.getProtocol().equals("mysql")
+                                ? "UNIX_TIMESTAMP(now() - INTERVAL ? SECOND)"
+                                : "extract(epoch from now())")
+                        + blacklistQuery;
+                break;
         }
 
         int rows = 0;
@@ -736,6 +849,7 @@ public class ScanDBManager {
                     break;
                 case Monocle:
                 case Hydro74000Monocle:
+                case RealDeviceMap:
                     LocalDateTime localDateTime = lastChecked.withZoneSameInstant(novaBot.getConfig().getTimeZone()).toLocalDateTime();
                     String timeStamp = String.format("%s %s", localDateTime.toLocalDate(), localDateTime.toLocalTime());
 
@@ -861,7 +975,24 @@ public class ScanDBManager {
                         weather = rs.getInt(14);
                         String encounter_id = rs.getString(15);
                         pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, 0, 0, gender, form, cp, level, weather, encounter_id);
-
+                        break;
+                    case RealDeviceMap:
+                        id = rs.getInt(1);
+                        lat = rs.getDouble(2);
+                        lon = rs.getDouble(3);
+                        disappearTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(rs.getLong(4)), UtilityFunctions.UTC);
+                        attack = (Integer) rs.getObject(5);
+                        defense = (Integer) rs.getObject(6);
+                        stamina = (Integer) rs.getObject(7);
+                        move1 = (Integer) rs.getObject(8);
+                        move2 = (Integer) rs.getObject(9);
+                        gender = (Integer) rs.getObject(10);
+                        form = (Integer) rs.getObject(11);
+                        cp = (Integer) rs.getObject(12);
+                        level = (Integer) rs.getObject(13);
+                        weather = rs.getInt(14);
+                        encounter_id = rs.getString(15);
+                        pokeSpawn = new PokeSpawn(id, lat, lon, disappearTime, attack, defense, stamina, move1, move2, 0, 0, gender, form, cp, level, weather, encounter_id);
                         break;
                 }
 
@@ -962,6 +1093,11 @@ public class ScanDBManager {
                         "WHERE fort_id = (SELECT @id:=id FROM forts where external_id = ?) " +
                         "  AND last_modified = ( SELECT lm FROM (SELECT MAX(last_modified) lm FROM fort_sightings fs2 WHERE fs2.fort_id = @id) as c)";
                 break;
+            case RealDeviceMap:
+                sql = "UPDATE gym " +
+                        "SET updated = ? " +
+                        "WHERE id = ?";
+                break;
         }
 
         try (Connection connection = getScanConnection();
@@ -975,6 +1111,7 @@ public class ScanDBManager {
                 case Monocle:
                     return;
                 case Hydro74000Monocle:
+                case RealDeviceMap:
                     statement.setLong(1, System.currentTimeMillis() / 1000L);
                     statement.setString(2, fortsId);
                     break;

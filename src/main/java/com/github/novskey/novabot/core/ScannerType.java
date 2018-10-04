@@ -7,7 +7,8 @@ public enum ScannerType {
     RocketMap,
     Monocle,
     Hydro74000Monocle,
-    PhilMap, SloppyRocketMap, SkoodatRocketMap;
+    PhilMap, SloppyRocketMap, SkoodatRocketMap,
+    RealDeviceMap;
 
     public static ScannerType fromString(String str){
         switch (str.toLowerCase().trim()){
@@ -23,6 +24,8 @@ public enum ScannerType {
                 return SloppyRocketMap;
             case "skoodatrocketmap":
                 return SkoodatRocketMap;
+            case "realdevicemap":
+                return RealDeviceMap;
         }
 
         return null;
