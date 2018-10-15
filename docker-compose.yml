@@ -1,0 +1,32 @@
+version: '3.1'
+services:
+  novabot:
+    image: 0815flo/novabot:latest
+    container_name: novabot
+    restart: unless-stopped
+    tty: true
+    depends_on:
+      - db
+    volumes:
+      - config:/novabot/data
+    ports:
+      - 8080:8080
+  db:
+    image: mariadb
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    container_name: novabot-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: YourStrongRootPassw0rd!
+      MYSQL_DATABASE: novabotdb
+      MYSQL_USER: novabotuser
+      MYSQL_PASSWORD: YourStrongPassw0rd!
+    ports:
+      - 3306:3306
+    volumes:
+     - data:/var/lib/mysql
+volumes:
+  config:
+    driver: local
+  data:
+    driver: local
