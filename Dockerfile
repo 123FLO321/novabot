@@ -19,4 +19,4 @@ COPY raidfilter.json raidfilter.json
 COPY suburbs.txt suburbs.txt
 RUN echo > supporterlevels.txt
 
-CMD ["java", "-jar", "/novabot/novabot.jar"]
+ENTRYPOINT ["java", "-jar", "/novabot/novabot.jar"]
