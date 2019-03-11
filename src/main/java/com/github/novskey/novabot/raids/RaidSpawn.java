@@ -185,7 +185,7 @@ public class RaidSpawn extends Spawn {
             if (raidLevel >= 3 && novaBot.getConfig().isRaidOrganisationEnabled()) {
                 if (members != null) {
                     lobbyString = "\n**" + StringLocalizer.getLocalString("Times") + "**:";
-                    TreeMap<String, Integer> times = new TreeMap<String, Integer>();
+                    TreeMap<String, Integer> times = new TreeMap<>();
                     for (RaidLobbyMember member : members) {
                         String time;
                         if (member.time == null) {

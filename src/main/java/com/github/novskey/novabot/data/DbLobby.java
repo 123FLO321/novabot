@@ -15,7 +15,7 @@ public class DbLobby {
     public String inviteCode;
     public String lobbyChatId;
     public String[] lobbyChatIds;
-    public HashSet<RaidLobbyMember> members = new HashSet<RaidLobbyMember>();
+    public HashSet<RaidLobbyMember> members = new HashSet<>();
 
     public DbLobby(String gymId, String channelId, String roleId, int nextTimeLeftUpdate, String inviteCode, HashSet<RaidLobbyMember> members, String[] lobbyChatIds) {
         this.gymId = gymId;

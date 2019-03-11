@@ -4,6 +4,7 @@ import com.github.novskey.novabot.Util.CommandLineOptions;
 import com.github.novskey.novabot.core.NovaBot;
 import com.google.maps.GeoApiContext;
 import com.google.maps.GeocodingApi;
+import com.google.maps.errors.OverDailyLimitException;
 import com.google.maps.errors.RequestDeniedException;
 import com.google.maps.model.AddressComponent;
 import com.google.maps.model.AddressComponentType;
@@ -133,7 +134,7 @@ public class ReverseGeocoder {
                 novaBot.dataManager.setGeocodedLocation(lat, lon, location);
             }
         }
-        catch (com.google.maps.errors.OverDailyLimitException e){
+        catch (com.google.maps.errors.OverQueryLimitException | OverDailyLimitException e){
             novaBot.novabotLog.info(String.format("Exceeded daily geocoding limit with key %s, removing from rotation. Enable key again with !reload.", key));
             synchronized (novaBot.getConfig().getGeocodingKeys()) {
                 novaBot.getConfig().getGeocodingKeys().remove(key);

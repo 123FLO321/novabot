@@ -1,9 +1,6 @@
 package com.github.novskey.novabot.core;
 
-import com.github.novskey.novabot.Util.UtilityFunctions;
-import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.raids.RaidLobby;
-
 import net.dv8tion.jda.client.entities.Group;
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.entities.*;
@@ -14,7 +11,7 @@ import net.dv8tion.jda.core.events.guild.member.GuildMemberRoleRemoveEvent;
 import net.dv8tion.jda.core.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.core.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.core.events.user.UserNameUpdateEvent;
+import net.dv8tion.jda.core.events.user.update.UserUpdateNameEvent;
 import net.dv8tion.jda.core.hooks.ListenerAdapter;
 
 import java.util.HashMap;
@@ -46,7 +43,7 @@ public class MessageListener extends ListenerAdapter {
     }
 
     @Override
-    public void onUserNameUpdate(UserNameUpdateEvent event) {
+    public void onUserUpdateName(UserUpdateNameEvent event) {
         if (!mainBot || !novaBot.getConfig().loggingEnabled()) return;
 
         final User user = event.getUser();

@@ -2,13 +2,9 @@ package com.github.novskey.novabot.raids;
 
 import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.Util.UtilityFunctions;
-import com.github.novskey.novabot.core.AlertChannel;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.core.ScheduledExecutor;
 import com.github.novskey.novabot.core.Types;
-import com.github.novskey.novabot.data.SettingsDBManager;
-import com.github.novskey.novabot.maps.TimeZones;
-
 import net.dv8tion.jda.core.EmbedBuilder;
 import net.dv8tion.jda.core.MessageBuilder;
 import net.dv8tion.jda.core.Permission;
@@ -21,9 +17,11 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -40,7 +38,7 @@ public class RaidLobby {
 
 	public RaidSpawn spawn;
 
-	public final HashSet<RaidLobbyMember> members = new HashSet<RaidLobbyMember>();
+	public final HashSet<RaidLobbyMember> members = new HashSet<>();
 	private NovaBot novaBot;
 
 	ScheduledExecutor shutDownService = null;
@@ -347,7 +345,7 @@ public class RaidLobby {
 	}
 	
 	private String getTimeString() {
-		TreeMap<String, Integer> times = new TreeMap<String, Integer>();
+		TreeMap<String, Integer> times = new TreeMap<>();
 		for (RaidLobbyMember member : members) {
 			String time;
 			if (member.time == null) {
@@ -376,7 +374,7 @@ public class RaidLobby {
 	}
 	
 	private TreeSet<String> getTimes() {
-		TreeSet<String> times = new TreeSet<String>();
+		TreeSet<String> times = new TreeSet<>();
 		
 		ZonedDateTime middle = spawn.battleStart.plusMinutes(20);		
 		ZonedDateTime end = spawn.battleStart.plusMinutes(40);
@@ -484,8 +482,8 @@ public class RaidLobby {
 
 			channelName = channelName.substring(0, Math.min(25, channelName.length()));
 
-			role.getManagerUpdatable().getNameField().setValue(String.format("raid-%s", channelName))
-					.getMentionableField().setValue(true).update().queue();
+			role.getManager().setName(String.format("raid-%s", channelName))
+					.setMentionable(true).queue();
 
 			if (novaBot.getConfig().getRaidLobbyCategory() == null) {
 				channelId = novaBot.guild.getController().createTextChannel(String.format("raid-%s", channelName))
@@ -501,8 +499,8 @@ public class RaidLobby {
 				channel.createPermissionOverride(novaBot.guild.getPublicRole()).setDeny(Permission.MESSAGE_READ)
 						.complete();
 			} else {
-				channel.getPermissionOverride(novaBot.guild.getPublicRole()).getManagerUpdatable()
-						.deny(Permission.MESSAGE_READ).update().complete();
+				channel.getPermissionOverride(novaBot.guild.getPublicRole()).getManager()
+						.deny(Permission.MESSAGE_READ).complete();
 			}
 
 			channel.createPermissionOverride(role)
@@ -514,9 +512,9 @@ public class RaidLobby {
 						.complete();
 			} else {
 				channel.getPermissionOverride(novaBot.jda.getRoleById(novaBot.getConfig().novabotRole()))
-						.getManagerUpdatable()
+						.getManager()
 						.grant(Permission.MESSAGE_READ, Permission.MESSAGE_WRITE, Permission.CREATE_INSTANT_INVITE)
-						.update().complete();
+						.complete();
 			}
 
 			channel.createInvite().queue(inv -> {
@@ -565,7 +563,7 @@ public class RaidLobby {
 		String timeString = "";
 		String userTimeReal = userTime;
 		if (!forceTime && userTime == null) {
-            TreeMap<String, Integer> times = new TreeMap<String, Integer>();
+            TreeMap<String, Integer> times = new TreeMap<>();
             for (RaidLobbyMember memberI : members) {
                 if (memberI.time != null) {
                     if (times.containsKey(memberI.time)) {
@@ -713,9 +711,8 @@ public class RaidLobby {
 	public void loadMembers(HashSet<RaidLobbyMember> prevMembers) {
 		try {			
 			Role role = novaBot.jda.getRoleById(roleId);
-			
-			final HashSet<String> memberIds = new HashSet<>();
-			memberIds.addAll(novaBot.guild.getMembersWithRoles(role).stream().map(member -> member.getUser().getId()).collect(Collectors.toList()));
+
+			final HashSet<String> memberIds = novaBot.guild.getMembersWithRoles(role).stream().map(member -> member.getUser().getId()).collect(Collectors.toCollection(HashSet::new));
 			members.clear();
 			for (RaidLobbyMember member : prevMembers) {
 				if (memberIds.contains(member.memberId)) {

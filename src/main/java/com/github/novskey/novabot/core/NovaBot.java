@@ -20,20 +20,19 @@ import com.github.novskey.novabot.raids.RaidLobby;
 import net.dv8tion.jda.core.*;
 import net.dv8tion.jda.core.entities.*;
 import net.dv8tion.jda.core.events.message.react.MessageReactionAddEvent;
-
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.security.SecureRandom;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import static com.github.novskey.novabot.Util.StringLocalizer.getLocalString;
 import static com.github.novskey.novabot.core.Spawn.printFormat24hr;
@@ -267,9 +266,7 @@ public class NovaBot {
                 channel.sendMessageFormat("%s, %s", author, getLocalString("SendPrivateMessage")).queue();
             }
             author.openPrivateChannel().queue((privateChannel) ->
-            {
-            		privateChannel.sendMessageFormat("%s, %s", author, getLocalString("GetTokenMessage").replace("<token>", token).replace("<hours>", String.valueOf(hours))).queue();
-            });
+                                                      privateChannel.sendMessageFormat("%s, %s", author, getLocalString("GetTokenMessage").replace("<token>", token).replace("<hours>", String.valueOf(hours))).queue());
             return;
         }
 
@@ -1037,8 +1034,8 @@ public class NovaBot {
 							StringLocalizer.getLocalString("NoTimeSpecified"))
 					.queue();
         			return;
-        		};
-        		
+        		}
+
         		int hour;
         		int minute;
         		boolean valid = false;
@@ -1215,7 +1212,7 @@ public class NovaBot {
                     .setAutoReconnect(true)
                     .setGame(pokemonGo)
                     .setToken(getConfig().getToken())
-                    .buildBlocking();
+                    .build().awaitReady();
 
             jda.addEventListener(new MessageListener(this,true));
 
@@ -1234,7 +1231,7 @@ public class NovaBot {
                                 .setGame(pokemonGo)
                                 .setToken(token)
                                 .addEventListener(new MessageListener(this, false))
-                                .buildBlocking()));
+                                .build().awaitReady()));
                         botNum++;
                     }
                     botTokens.add(token);

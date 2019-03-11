@@ -52,7 +52,7 @@ public class Config {
     private ArrayList<Integer> raidBosses = new ArrayList<>(Arrays.asList(2, 5, 8, 11, 28, 31, 34, 38, 62, 65, 68, 71, 73, 76, 82, 91, 94, 105, 123, 129, 131, 137, 139, 143, 144, 145, 146, 150, 243, 244, 245, 248, 249, 302, 303, 359));
     private ArrayList<Integer> blacklist = new ArrayList<>();
     private ArrayList<String> notificationTokens = new ArrayList<>();
-    private HashSet<ScannerDb> scannerDbs = new HashSet<ScannerDb>();
+    private HashSet<ScannerDb> scannerDbs = new HashSet<>();
     private boolean logging = false;
     private boolean stats = true;
     private boolean startupMessage = false;
@@ -182,8 +182,7 @@ public class Config {
     public boolean showColor(String formatFile, String formatKey) {
         String showColor = formats.get(formatFile).getFormatting(formatKey, "showColor");
 
-        if (showColor == null) return true;
-        return Boolean.parseBoolean(showColor);
+        return showColor == null || Boolean.parseBoolean(showColor);
     }
 
     public boolean useGlobalFilter() {

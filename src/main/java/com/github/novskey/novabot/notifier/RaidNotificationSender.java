@@ -9,6 +9,7 @@ import com.github.novskey.novabot.raids.RaidSpawn;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.TextChannel;
 import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,10 +144,25 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
 
         ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
         ZonedDateTime currentTime = ZonedDateTime.now(UtilityFunctions.UTC);
-        if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
-            localLog.info(String.format("Checking supporter status of %s", user.getName()));
-            novaBot.lastUserRoleChecks.put(userID, currentTime);
-            if (checkSupporterStatus(user)) {
+        
+        try {
+            if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
+                localLog.info(String.format("Checking supporter status of %s", user.getName()));
+                novaBot.lastUserRoleChecks.put(userID, currentTime);
+                if (checkSupporterStatus(user)) {
+                    user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue(
+                            msg -> {
+                                if (showTick) {
+                                    msg.addReaction(NUMBER_1).queue();
+                                    msg.addReaction(NUMBER_2).queue();
+                                    msg.addReaction(NUMBER_3).queue();
+                                    msg.addReaction(NUMBER_4).queue();
+                                    msg.addReaction(NUMBER_5).queue();
+                                }
+                            }
+                    ));
+                }
+            } else {
                 user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue(
                         msg -> {
                             if (showTick) {
@@ -159,18 +175,11 @@ public class RaidNotificationSender extends NotificationSender implements Runnab
                         }
                 ));
             }
-        } else {
-            user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue(
-                    msg -> {
-                        if (showTick) {
-                            msg.addReaction(NUMBER_1).queue();
-                            msg.addReaction(NUMBER_2).queue();
-                            msg.addReaction(NUMBER_3).queue();
-                            msg.addReaction(NUMBER_4).queue();
-                            msg.addReaction(NUMBER_5).queue();
-                        }
-                    }
-            ));
+        } catch (
+        ErrorResponseException e){
+            if (e.getErrorCode() == 50007) {
+                localLog.error(String.format("Failed to send message to user %s (id:%s)", user.getName(), userID));
+            }
         }
     }
 

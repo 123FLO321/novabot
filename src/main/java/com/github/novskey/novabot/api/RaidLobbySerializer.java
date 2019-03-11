@@ -44,7 +44,7 @@ public class RaidLobbySerializer {
                         generator.write("member_count", lobby.memberCount());
 
 
-                        TreeMap<String, Integer> times = new TreeMap<String, Integer>();
+                        TreeMap<String, Integer> times = new TreeMap<>();
                         for (RaidLobbyMember member : lobby.members) {
                             String time;
                             if (member.time == null) {

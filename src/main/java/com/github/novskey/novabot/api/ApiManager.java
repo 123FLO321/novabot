@@ -1,10 +1,15 @@
 package com.github.novskey.novabot.api;
 
-import com.github.novskey.novabot.Util.StringLocalizer;
 import com.github.novskey.novabot.core.Config;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.notifier.RaidNotificationSender;
 import com.github.novskey.novabot.raids.RaidLobby;
+import com.github.novskey.novabot.raids.RaidSpawn;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,13 +17,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.github.novskey.novabot.raids.RaidSpawn;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ApiManager {
 
@@ -127,7 +125,6 @@ public class ApiManager {
                                 if (splited.length != 2) {
                                     errorRespones(t, "invalid_params", 400);
                                 }
-                                ;
 
                                 int hour;
                                 int minute;
@@ -182,7 +179,6 @@ public class ApiManager {
                             if (splited.length != 2) {
                                 errorRespones(t, "invalid_params", 400);
                             }
-                            ;
 
                             int hour;
                             int minute;

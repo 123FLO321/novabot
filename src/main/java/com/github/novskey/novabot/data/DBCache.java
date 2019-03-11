@@ -1,7 +1,6 @@
 package com.github.novskey.novabot.data;
 
 import com.github.novskey.novabot.Util.UtilityFunctions;
-import com.github.novskey.novabot.api.Token;
 import com.github.novskey.novabot.core.Location;
 import com.github.novskey.novabot.core.NovaBot;
 import com.github.novskey.novabot.core.Spawn;

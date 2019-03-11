@@ -8,6 +8,7 @@ import com.github.novskey.novabot.pokemon.PokeSpawn;
 import com.github.novskey.novabot.pokemon.Pokemon;
 import net.dv8tion.jda.core.entities.Message;
 import net.dv8tion.jda.core.entities.User;
+import net.dv8tion.jda.core.exceptions.ErrorResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,17 +104,23 @@ public class PokeNotificationSender extends NotificationSender implements Runnab
         final User user = novaBot.getUserJDA(userID).getUserById(userID);
         if (user == null) return;
 
-
         ZonedDateTime lastChecked = novaBot.lastUserRoleChecks.get(userID);
         ZonedDateTime currentTime = ZonedDateTime.now(UtilityFunctions.UTC);
-        if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
-            localLog.info(String.format("Checking supporter status of %s", user.getName()));
-            novaBot.lastUserRoleChecks.put(userID, currentTime);
-            if (checkSupporterStatus(user)) {
+
+        try {
+            if (lastChecked == null || lastChecked.isBefore(currentTime.minusMinutes(10))) {
+                localLog.info(String.format("Checking supporter status of %s", user.getName()));
+                novaBot.lastUserRoleChecks.put(userID, currentTime);
+                if (checkSupporterStatus(user)) {
+                    user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue());
+                }
+            } else {
                 user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue());
             }
-        } else {
-            user.openPrivateChannel().queue(channel -> channel.sendMessage(message).queue());
+        } catch (ErrorResponseException e){
+            if (e.getErrorCode() == 50007) {
+                localLog.error(String.format("Failed to send message to user %s (id:%s)", user.getName(), userID));
+            }
         }
     }
 

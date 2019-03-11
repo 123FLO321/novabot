@@ -5,6 +5,7 @@ import com.google.maps.GeoApiContext;
 import com.google.maps.TimeZoneApi;
 import com.google.maps.errors.ApiException;
 import com.google.maps.errors.OverDailyLimitException;
+import com.google.maps.errors.OverQueryLimitException;
 import com.google.maps.errors.RequestDeniedException;
 import com.google.maps.model.LatLng;
 
@@ -53,7 +54,7 @@ public class TimeZones {
 
             novaBot.dataManager.setZoneId(lat, lon, zoneId);
 
-        } catch (OverDailyLimitException e) {
+        } catch (OverDailyLimitException | OverQueryLimitException e) {
             novaBot.novabotLog.info(String.format("Exceeded daily time zone limit with key %s, removing from rotation. Enable key again with !reload.", key));
             novaBot.getConfig().getTimeZoneKeys().remove(key);
         }catch (RequestDeniedException e){
