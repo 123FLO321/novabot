@@ -1,4 +1,4 @@
-FROM maven:3.5.4-jdk-8 as builder
+FROM maven:3.5.4-jdk-8-alpine as builder
 WORKDIR /build/
 COPY src src
 COPY pom.xml pom.xml
